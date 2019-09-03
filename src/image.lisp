@@ -9,66 +9,22 @@
 
 (in-package :theme-manager)
 
-(defparameter *background-color*
-  (make-color :red 0 :green 0 :blue 0)
-  "The ideal background color to be approximated in created themes.
-Usually either black or white depending on whether a dark or light
-theme (respectively) is desired.")
+(defparameter *background-lightness* 15)
 
-(defparameter *light-background-color*
-  (make-color :red 255 :green 255 :blue 255)
-  "The ideal light background color (base07) to be approximated in created themes.
-Usually either white or black depending on whether a dark or light
-theme (respectively) is desired.")
+(defparameter *light-background-lightness* 85)
 
-(defstruct color
-  "A standard RGB color with each component between 0 and 255."
-  (red 0 :type (integer 0 255) :read-only t)
-  (green 0 :type (integer 0 255) :read-only t)
-  (blue 0 :type (integer 0 255) :read-only t))
+(defparameter *min-accent-saturation* 40)
 
-(defun color-hex (color)
-  "Return a string with COLOR in hexadecimal format."
-  (with-slots (red green blue) color
-    (format nil "~2,'0x~2,'0x~2,'0x" red green blue)))
+(defparameter *min-accent-value* 60)
 
-(defun print-colors (colors)
-  "For debugging purposes only: print COLORS in a readable format."
-  (loop for color across colors
-     do (format t "#~a~%" (color-hex color))))
+(defparameter *min-accent-contrast* 1.5)
 
-(defun fg-bg-colors (colors &key (n-gradations 8))
-  "Return a vector of N-GRADATIONS colors to be used as foreground and background colors, using two colors from COLORS as the endpoints of the gradient."
-  (let ((dark (nth-value 1 (color-min-distance colors *background-color*)))
-	(light (nth-value 1 (color-min-distance colors *light-background-color*))))
-    (gradate dark light n-gradations)))
+(defparameter *min-accent-distance* 40)
 
-(defun gradate (start end n-colors)
-  "Return a vector of N-COLORS colors gradating from START to END."
-  (assert (>= n-colors 2) (n-colors)
-	  "Must have at least two colors in gradient.")
-  (let ((n-steps (1- n-colors))
-	(gradient (make-array n-colors
-			      :element-type 'color
-			      :initial-element start)))
-    (labels ((value-step (start end step)
-	       (round  (+ start (* (- end start) (/ step n-steps)))))
-	     (gradient-step (step)
-	       (make-color :red (value-step (color-red start)
-					    (color-red end)
-					    step)
-			   :green (value-step (color-green start)
-					      (color-green end)
-					      step)
-			   :blue (value-step (color-blue start)
-					     (color-blue end)
-					     step))))
-      (loop for i from 1 to n-steps
-	 do (setf (aref gradient i) (gradient-step i))))
-    gradient))
-
-(defun provide-missing-colors (colors all-colors total &key (min-distance 40))
-  "Return a vector of TOTAL colors consisting of the vector COLORS with additional colors from the vector ALL-COLORS."
+(defun provide-missing-colors (colors all-colors bg-color total)
+  "Return a vector of TOTAL colors consisting of the vector COLORS with additional colors from the vector ALL-COLORS.
+The returned colors will satisfy the constraints on accent color
+distance and contrast with BG-COLOR."
   (assert (<= (length colors) total)
 	  (colors total)
 	  "Requested total number of colors is ~a, less than the existing number ~a."
@@ -80,19 +36,22 @@ theme (respectively) is desired.")
 		minimize (distance color other))))
       (loop for color across all-colors
 	 until (= (length new-colors) total)
-	 when (>= (min-distance color) min-distance)
+	 when (and (>= (min-distance color) *min-accent-distance*)
+		   (>= (contrast color bg-color) *min-accent-contrast*))
 	 do (push color new-colors))
       (when (< (length new-colors) total)
 	(error "Wanted ~a total colors but could only find ~a."
 	       total (length new-colors)))
       (make-array total :element-type 'color :initial-contents new-colors))))
 
-(defun unique-colors (colors &key (min-distance 40))
-  "Return a vector of colors from the vector COLORS such that no pair is closer together than MIN-DISTANCE."
+(defun unique-colors (colors bg-color)
+  "Return a vector of colors from the vector COLORS satisfying the
+constraints on accent color distance and contrast with BG-COLOR."
   (let ((unique ()))
     (loop for color across colors
        when (loop for other in unique
-	       always (>= (distance color other) min-distance))
+	       always (and (>= (distance color other) *min-accent-distance*)
+			   (>= (contrast color bg-color) *min-accent-contrast*)))
        do (push color unique))
     (make-array (length unique)
 		:element-type 'color
@@ -119,6 +78,33 @@ directions) will be considered."
 	  (setf (aref colors (+ (* num-y i) j)) color))))
     colors))
 
+(defun theme-from-colors (colors &key (n-neutral 8) (n-accent 8))
+  (let* ((primary (aref (k-means colors 1) 0))
+	 (neutral (gradate-lightness primary
+				     *background-lightness*
+				     *light-background-lightness*
+				     n-neutral))
+	 ;; Base02 is used for the selection background, so contrast
+	 ;; should be evaluated with reference to it
+	 (bg-color (aref neutral 2))
+	 (bright-colors (map 'vector
+			     #'(lambda (color)
+				 (clamp-saturation-and-value color
+							     *min-accent-saturation*
+							     *min-accent-value*))
+			     colors))
+	 (accent (k-means bright-colors n-accent))
+	 (unique-accent (unique-colors accent bg-color))
+	 (all-accent (provide-missing-colors unique-accent
+					     bright-colors
+					     bg-color
+					     n-accent)))
+    ;; By sorting the accent colors by hue, we have the best chance of
+    ;; aligning with the order of other Base16 themes
+    (sort all-accent #'< :key (lambda (color)
+				(color-hsl-hue (rgb-to-hsl color))))
+    (concatenate '(vector color) neutral all-accent)))
+
 (defun k-means (colors n-means)
   "Return a vector of N-MEANS colors that serve as the centroids of the clusters in the vector COLORS.
 THRESHOLD controls the convergence threshold; once the means converge,
@@ -126,22 +112,15 @@ the algorithm is complete."
   (assert (<= n-means (length colors)) (colors n-means)
 	  "Cannot find ~a means from only ~a colors."
 	  n-means (length colors))
-  (shuffle colors)
+  ;; TODO: I want this function to be deterministic, but make sure
+  ;; that just choosing the initial means like this doesn't degrade
+  ;; the quality of the resulting color scheme
   (let ((means (subseq colors 0 n-means)))
     (loop
        (let ((next-means (next-means colors means)))
 	 (when (converged-p next-means means)
 	   (return-from k-means next-means))
 	 (setf means next-means)))))
-
-(defun shuffle (data)
-  "Shuffle DATA in a random order."
-  (loop
-     for i from (length data) downto 1
-     do (rotatef
-	 (aref data (random i))
-	 (aref data (1- i))))
-  data)
 
 (defstruct average-accumulator
   "An accumulator for several colors so that their values can be averaged."
@@ -183,32 +162,8 @@ the algorithm is complete."
 	   (accumulate-color accumulator color)))
     (map 'vector #'average-color means-temp)))
 
-(defun color-min-distance (colors color)
-  "Find the color in the vector COLORS that is the shortest distance from COLOR.
-This function returns two values, first the position of the color in
-COLORS and second the color itself."
-  (assert (/= (length colors) 0) (colors) "COLORS is empty.")
-  (let* ((min-idx 0)
-	 (min-distance (distance color (aref colors min-idx))))
-    (loop for i from 1 below (length colors) do
-	 (let ((distance (distance color (aref colors i))))
-	   (when (< distance min-distance)
-	     (setf min-idx i
-		   min-distance distance))))
-    (values min-idx (aref colors min-idx))))
-
 (defun converged-p (means1 means2)
   "Return whether the vectors MEANS1 and MEANS2 have converged."
   (equalp means1 means2))
-
-(defun distance (p1 p2)
-  "Return the Euclidean distance between colors p1 and p2."
-  (sqrt (+ (square (- (color-red p1) (color-red p2)))
-	   (square (- (color-green p1) (color-green p2)))
-	   (square (- (color-blue p1) (color-blue p2))))))
-
-(defun square (x)
-  "Return X squared."
-  (* x x))
 
 ;;;; image.lisp ends here

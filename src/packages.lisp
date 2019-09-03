@@ -1,5 +1,5 @@
 (defpackage :theme-manager
   (:documentation "TODO")
-  (:use :common-lisp))
+  (:use	:common-lisp))
 
-;;; Needs png
+;;; Needs alexandria, png
