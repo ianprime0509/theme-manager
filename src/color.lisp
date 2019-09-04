@@ -53,14 +53,14 @@
 
 (defun rgb-to-hsl (color)
   (with-hue-components (hue max min) color
-    (if (= max 0)
-	(make-color-hsl)
-	(let* ((saturation (/ (- max min)
-			      (- 1 (abs (+ max min -1)))))
-	       (lightness (/ (+ max min) 2)))
-	  (make-color-hsl :hue hue
-			  :saturation saturation
-			  :lightness lightness)))))
+    (cond ((= max 0) (make-color-hsl :hue 0 :saturation 0 :lightness 0))
+	  ((= max 1) (make-color-hsl :hue 0 :saturation 0 :lightness 1))
+	  (t (let* ((saturation (/ (- max min)
+				   (- 1 (abs (+ max min -1)))))
+		    (lightness (/ (+ max min) 2)))
+	       (make-color-hsl :hue hue
+			       :saturation saturation
+			       :lightness lightness))))))
 
 (defun rgb-to-hsv (color)
   (with-hue-components (hue max min) color
@@ -198,9 +198,9 @@ COLORS and second the color itself."
 (defun distance (color1 color2)
   "Return the Euclidean distance between colors COLOR1 and COLOR2."
   (flet ((square (x) (* x x)))
-	(sqrt (+ (square (- (color-red color1) (color-red color2)))
-		 (square (- (color-green color1) (color-green color2)))
-		 (square (- (color-blue color1) (color-blue color2)))))))
+    (sqrt (+ (square (- (color-red color1) (color-red color2)))
+	     (square (- (color-green color1) (color-green color2)))
+	     (square (- (color-blue color1) (color-blue color2)))))))
 
 (defun contrast (color1 color2)
   "Return the contrast ratio between COLOR1 and COLOR2.
