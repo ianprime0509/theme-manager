@@ -12,7 +12,7 @@
   :version "0.1.0"
   :author "Ian Johnson <ianprime0509@gmail.com>"
   :licence "MIT"
-  :depends-on ("alexandria" "png")
+  :depends-on ("alexandria" "cl-mustache" "png")
   :components ((:file "packages")
 	       (:file "color" :depends-on ("packages"))
 	       (:file "image" :depends-on ("color"))
