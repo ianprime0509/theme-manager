@@ -1,5 +1,12 @@
 ;;;; theme.lisp --- theme generation functions
 
+;;; Copyright 2019 Ian Johnson
+
+;;; This file is part of theme-manager, a free software project for
+;;; generating and managing color themes. It is distributed under the
+;;; MIT license, a copy of which can be found in the project root
+;;; directory in the LICENSE file.
+
 ;;;; Commentary:
 
 ;;; This file contains functions for generating themes from color
