@@ -61,7 +61,7 @@
 (defun rgb-to-hsl (color)
   (with-hue-components (hue max min) color
     (cond ((= max 0) (make-color-hsl :hue 0 :saturation 0 :lightness 0))
-	  ((= max 1) (make-color-hsl :hue 0 :saturation 0 :lightness 1))
+	  ((= min 1) (make-color-hsl :hue 0 :saturation 0 :lightness 1))
 	  (t (let* ((saturation (/ (- max min)
 				   (- 1 (abs (+ max min -1)))))
 		    (lightness (/ (+ max min) 2)))
@@ -147,30 +147,6 @@
   "For debugging purposes only: print COLORS in a readable format."
   (loop for color across colors
      do (print-color color)))
-
-(defun gradate (start end n-colors)
-  "Return a vector of N-COLORS colors gradating from START to END."
-  (assert (>= n-colors 2) (n-colors)
-	  "Must have at least two colors in gradient.")
-  (let ((n-steps (1- n-colors))
-	(gradient (make-array n-colors
-			      :element-type 'color
-			      :initial-element start)))
-    (labels ((value-step (start end step)
-	       (round  (+ start (* (- end start) (/ step n-steps)))))
-	     (gradient-step (step)
-	       (make-color :red (value-step (color-red start)
-					    (color-red end)
-					    step)
-			   :green (value-step (color-green start)
-					      (color-green end)
-					      step)
-			   :blue (value-step (color-blue start)
-					     (color-blue end)
-					     step))))
-      (loop for i from 1 to n-steps
-	 do (setf (aref gradient i) (gradient-step i))))
-    gradient))
 
 (defun gradate-lightness (color start-lightness end-lightness n-colors)
   (let ((n-steps (1- n-colors))
