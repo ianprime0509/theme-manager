@@ -17,6 +17,7 @@
   ((:module "test"
 	    :pathname "test"
 	    :components ((:file "packages")
-			 (:file "color" :depends-on ("packages"))))))
+			 (:file "color" :depends-on ("packages"))
+			 (:file "manager" :depends-on ("packages"))))))
 
 ;;;; theme-manager-test.asd ends here

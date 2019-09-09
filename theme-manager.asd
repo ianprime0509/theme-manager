@@ -16,6 +16,7 @@
   :components ((:file "packages")
 	       (:file "color" :depends-on ("packages"))
 	       (:file "image" :depends-on ("color"))
-	       (:file "theme" :depends-on ("color"))))
+	       (:file "theme" :depends-on ("color"))
+	       (:file "manager" :depends-on ("theme"))))
 
 ;;;; theme-manager.asd ends here

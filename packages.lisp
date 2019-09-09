@@ -40,6 +40,8 @@ PNG images.")
    clamp-saturation-and-value
    gradate-lightness
    distance
-   contrast))
+   contrast
+   ;; manager.lisp
+   standard-template-path))
 
 ;;;; packages.lisp ends here
