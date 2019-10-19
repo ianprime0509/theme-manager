@@ -16,6 +16,7 @@
   :components ((:file "packages")
 	       (:file "color" :depends-on ("packages"))
 	       (:file "image" :depends-on ("color"))
+	       (:file "template" :depends-on ("color"))
 	       (:file "theme" :depends-on ("color"))
 	       (:file "manager" :depends-on ("theme"))))
 
