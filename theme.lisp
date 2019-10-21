@@ -55,6 +55,15 @@ two colors, treated as points with coordinates in the typical range of
 
 ;;; Primary functions
 
+(defun theme-from-png (path)
+  "Produce a theme from the colors in the PNG file located at PATH.
+This function is equivalent to composing THEME-FROM-COLORS with
+COLORS-FROM-PNG, but is more convenient. The theme produced by this
+function is always a base16 theme; for more control over the number of
+colors generated, use THEME-FROM-COLORS directly."
+  (let ((colors (colors-from-png path)))
+    (theme-from-colors colors)))
+
 (defun theme-from-colors (colors &key (n-neutral 8) (n-accent 8)
 				   (selection-bg-index (floor (/ n-neutral 4))))
   "Produce a theme from COLORS with N-NEUTRAL neutral colors and N-ACCENT accent colors.

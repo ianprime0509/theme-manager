@@ -41,7 +41,13 @@ PNG images.")
    gradate-lightness
    distance
    contrast
+   print-colors
+   ;; image.lisp
+   colors-from-png
    ;; manager.lisp
-   standard-template-path))
+   apply-theme
+   standard-template-path
+   ;; theme.lisp
+   theme-from-colors))
 
 ;;;; packages.lisp ends here

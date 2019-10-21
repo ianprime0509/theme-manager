@@ -18,13 +18,20 @@
 (defparameter *standard-template-type* "mustache"
   "The standard file type used for templates.")
 
-(defun apply-theme (theme path-list)
+(defparameter *standard-user-file*
+  (make-pathname :directory '(:relative "theme-manager" "paths.lisp"))
+  "The standard user paths file location, relative to the user's configuration directory.")
+
+(defun apply-theme (theme &optional (path-list (user-path-list)))
   "Apply THEME to the files described by PATH-LIST.
 PATH-LIST is a list of file descriptions. Each file description can be
 a pair (OUTPUT-PATH . TEMPLATE-PATH) of two pathnames (or strings)
 pointing to the output (rendered) file and template file.
 Alternatively, it can be just OUTPUT-PATH, in which case TEMPLATE-PATH
-is determined by STANDARD-TEMPLATE-PATH."
+is determined by STANDARD-TEMPLATE-PATH.
+
+If PATH-LIST is not provided, it defaults to the standard user path
+list returned by USER-PATH-LIST."
   (loop for description in path-list
      do (let ((output-path (if (consp description)
 			       (car description)
@@ -50,5 +57,16 @@ of '/home/user/.emacs.d/themes/my-theme.el.mustache'."
     (make-pathname :defaults pathname
 		   :name new-name
 		   :type *standard-template-type*)))
+
+(defun user-path-list ()
+    "Return the path list read from the standard user file.
+The standard user file is located in
+'$XDG_CONFIG_HOME/theme-manager/paths.lisp, where $XDG_CONFIG_HOME is
+the standard user config directory (usually '$HOME/.config' unless
+something else has been configured)."
+  (let ((user-path-pathname (merge-pathnames *standard-user-file*
+					     (uiop:xdg-config-home))))
+    (with-open-file (path-file user-path-pathname)
+      (read path-file))))
 
 ;;;; manager.lisp ends here
