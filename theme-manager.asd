@@ -14,10 +14,10 @@
   :licence "MIT"
   :depends-on ("alexandria" "cl-mustache" "png" "uiop")
   :components ((:file "packages")
-	       (:file "color" :depends-on ("packages"))
-	       (:file "image" :depends-on ("color"))
-	       (:file "manager" :depends-on ("theme"))
-	       (:file "template" :depends-on ("color"))
-	       (:file "theme" :depends-on ("color" "image"))))
+               (:file "color" :depends-on ("packages"))
+               (:file "image" :depends-on ("color"))
+               (:file "manager" :depends-on ("theme"))
+               (:file "template" :depends-on ("color"))
+               (:file "theme" :depends-on ("color" "image"))))
 
 ;;;; theme-manager.asd ends here

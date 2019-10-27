@@ -15,12 +15,12 @@
 (in-suite manager-suite)
 
 (test standard-template-path
-  (let ((cases '((#p"theme.json.mustache" . "theme.json")
-		 (#p"theme.json.mustache" . #p"theme.json")
-		 (#p"directory/theme.json.mustache" . #p"directory/theme.json")
-		 (#p"/home/user/theme.json.mustache" . #p"/home/user/theme.json")
-		 (#p"theme.mustache" . #p"theme"))))
-    (loop for (expected . input) in cases
-       do (is (equal expected (standard-template-path input))))))
+      (let ((cases '((#p"theme.json.mustache" . "theme.json")
+                     (#p"theme.json.mustache" . #p"theme.json")
+                     (#p"directory/theme.json.mustache" . #p"directory/theme.json")
+                     (#p"/home/user/theme.json.mustache" . #p"/home/user/theme.json")
+                     (#p"theme.mustache" . #p"theme"))))
+        (loop for (expected . input) in cases
+           do (is (equal expected (standard-template-path input))))))
 
 ;;;; manager.lisp ends here

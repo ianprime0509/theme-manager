@@ -27,19 +27,19 @@ Only pixels at intervals of SAMPLE-STEP (in both the x and y
 directions) will be considered."
   (check-type image png:rgb-image)
   (let* ((8-bit (png:8-bit-image image))
-	 (num-y (floor (/ (png:image-height 8-bit) sample-step)))
-	 (num-x (floor (/ (png:image-width 8-bit) sample-step)))
-	 (colors (make-array (* num-y num-x)
-			     :element-type 'color
-			     :initial-element (make-color))))
+         (num-y (floor (/ (png:image-height 8-bit) sample-step)))
+         (num-x (floor (/ (png:image-width 8-bit) sample-step)))
+         (colors (make-array (* num-y num-x)
+                             :element-type 'color
+                             :initial-element (make-color))))
     (dotimes (j num-y)
       (dotimes (i num-x)
-	(let* ((y (* j sample-step))
-	       (x (* i sample-step))
-	       (color (make-color :red (aref 8-bit y x 0)
-				  :green (aref 8-bit y x 1)
-				  :blue (aref 8-bit y x 2))))
-	  (setf (aref colors (+ (* num-y i) j)) color))))
+        (let* ((y (* j sample-step))
+               (x (* i sample-step))
+               (color (make-color :red (aref 8-bit y x 0)
+                                  :green (aref 8-bit y x 1)
+                                  :blue (aref 8-bit y x 2))))
+          (setf (aref colors (+ (* num-y i) j)) color))))
     colors))
 
 ;;;; image.lisp ends here
